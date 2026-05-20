@@ -1,0 +1,11 @@
+# Times in local wall-clock time — launchd uses your system timezone automatically
+schedule:
+  - "07:00"   # 7:00 AM — session window opens, resets at 12:00 PM
+  - "12:00"   # 12:00 PM — window resets, runs until 5:00 PM
+  # - "17:00" # 5:00 PM — optional evening block (uncomment to enable)
+
+greeting: "Starting a new work session."
+
+sleep_after_trigger: true
+# true  = sleep Mac after trigger if user has been idle 5+ min (woken from sleep)
+# false = never sleep (use if Mac is always awake when triggers fire)
