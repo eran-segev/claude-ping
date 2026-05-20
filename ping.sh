@@ -10,8 +10,12 @@ LOG_DIR="$HOME/.config/claude-ping/logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/$(date +%Y-%m-%d).log"
 
+log() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') — $*" | tee -a "$LOG_FILE"
+}
+
 if [ ! -f "$CONFIG" ]; then
-  echo "$(date '+%Y-%m-%d %H:%M:%S') — ERROR: config not found at $CONFIG. Run setup.sh." >> "$LOG_FILE"
+  log "ERROR: config not found at $CONFIG. Run setup.sh."
   exit 1
 fi
 
@@ -19,7 +23,7 @@ fi
 GREETING=$(grep -E '^greeting:' "$CONFIG" 2>/dev/null | sed 's/^greeting:[[:space:]]*//' | tr -d '"' || echo "Starting new work session.")
 SLEEP_AFTER=$(grep -E '^sleep_after_trigger:' "$CONFIG" 2>/dev/null | sed 's/^sleep_after_trigger:[[:space:]]*//' | tr -d ' ' || echo "false")
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') — Starting Claude session (sleep_after=$SLEEP_AFTER)" >> "$LOG_FILE"
+log "Starting Claude session (sleep_after=$SLEEP_AFTER)"
 
 # Network check with retries:
 #   - Mac may take 10-15s to reconnect after waking from sleep
@@ -30,26 +34,26 @@ network_ok() {
 }
 
 if ! network_ok; then
-  echo "$(date '+%Y-%m-%d %H:%M:%S') — Network not ready, retrying in 10s..." >> "$LOG_FILE"
+  log "Network not ready, retrying in 10s..."
   sleep 10
   if ! network_ok; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') — Still no network, retrying in 5min (intermittent connection)..." >> "$LOG_FILE"
+    log "Still no network, retrying in 5min (intermittent connection)..."
     sleep 300
     if ! network_ok; then
-      echo "$(date '+%Y-%m-%d %H:%M:%S') — SKIP: no network after retries" >> "$LOG_FILE"
+      log "SKIP: no network after retries"
       exit 0
     fi
   fi
 fi
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') — Network OK, calling claude" >> "$LOG_FILE"
+log "Network OK, calling claude..."
 
 # timeout 30: prevents hanging if OAuth needs interactive re-auth
 # -p = print mode: sends prompt, prints response, exits immediately (no persistent session)
-timeout 30 claude -p "$GREETING" >> "$LOG_FILE" 2>&1
-EXIT_CODE=$?
+timeout 30 claude -p "$GREETING" 2>&1 | tee -a "$LOG_FILE"
+EXIT_CODE=${PIPESTATUS[0]}
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') — Done (exit: $EXIT_CODE)" >> "$LOG_FILE"
+log "Done (exit: $EXIT_CODE)"
 
 # Put Mac back to sleep ONLY if user has been idle for 5+ minutes
 # (idle = Mac was woken for this job, not interrupted mid-work)
@@ -57,10 +61,10 @@ if [ "$SLEEP_AFTER" = "true" ]; then
   IDLE_NS=$(ioreg -c IOHIDSystem -d 3 -n IOHIDSystem 2>/dev/null | grep HIDIdleTime | awk -F= '{print $2}' | tr -d ' ')
   IDLE_SECS=$(( ${IDLE_NS:-0} / 1000000000 ))
   if [ "$IDLE_SECS" -gt 300 ]; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') — Idle ${IDLE_SECS}s, sleeping Mac" >> "$LOG_FILE"
+    log "Idle ${IDLE_SECS}s, sleeping Mac"
     sleep 2  # let log flush before sleep
     pmset sleepnow
   else
-    echo "$(date '+%Y-%m-%d %H:%M:%S') — User active (idle ${IDLE_SECS}s), skipping sleep" >> "$LOG_FILE"
+    log "User active (idle ${IDLE_SECS}s), skipping sleep"
   fi
 fi

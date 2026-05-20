@@ -1,8 +1,8 @@
 # Times in local wall-clock time — launchd uses your system timezone automatically
 schedule:
-  - "07:00"   # 7:00 AM — session window opens, resets at 12:00 PM
-  - "12:00"   # 12:00 PM — window resets, runs until 5:00 PM
-  # - "17:00" # 5:00 PM — optional evening block (uncomment to enable)
+  - "06:00"   # 6:00 AM — session window opens, resets at 12:00 PM
+  - "11:02"   # 11:02 PM — window resets, runs until 5:00 PM
+  - "16:04" # 4:04 PM — optional evening block (uncomment to enable)
 
 greeting: "Starting a new work session."
 

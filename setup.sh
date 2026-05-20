@@ -20,6 +20,7 @@ chmod +x "$CONFIG_DIR/ping.sh"
 # Read schedule times from config.yaml (no pyyaml dependency — grep-based, BSD sed safe)
 # Strip comments before extracting times to avoid matching times mentioned in comment text
 TIMES=$(grep -E '^\s*-\s+"?[0-9]{2}:[0-9]{2}"?' "$CONFIG_DIR/config.yaml" | sed 's/#.*//' | grep -oE '[0-9]{2}:[0-9]{2}')
+FIRST_TIME=$(echo "$TIMES" | head -1)
 
 if [ -z "$TIMES" ]; then
   echo "ERROR: No schedule times found in config.yaml. Add entries under 'schedule:'." >&2
@@ -78,13 +79,21 @@ EOF
 done
 
 echo ""
-echo "Claude Ping installed."
+echo "✓ Claude Ping installed."
 echo ""
-echo "NEXT: For reliable overnight wake, open:"
-echo "  System Settings → Battery → Schedule → enable 'Start up or wake'"
-echo "  Set to Weekdays at your earliest trigger time (a few minutes before the first schedule entry)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "REQUIRED: Schedule Mac wake (run once)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  sudo pmset repeat wake UMTWR ${FIRST_TIME}:00"
 echo ""
-echo "Verify logs: tail -f ~/.config/claude-ping/logs/$(date +%Y-%m-%d).log"
-echo "Test now:    bash ~/.config/claude-ping/ping.sh"
-echo "Update:      edit ~/.config/claude-ping/config.yaml, then re-run this script"
-echo "Remove:      for p in ~/Library/LaunchAgents/com.claudeping.*.plist; do launchctl bootout gui/\$(id -u)/\$(basename \$p .plist) && rm \$p; done"
+echo "  This wakes your Mac at your first trigger time (Sun–Thu)."
+echo "  Verify: pmset -g sched"
+echo "  Remove: sudo pmset repeat cancel"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "USAGE"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Test now:  bash ~/.config/claude-ping/ping.sh"
+echo "  Logs:      tail -f ~/.config/claude-ping/logs/\$(date +%Y-%m-%d).log"
+echo "  Update:    edit ~/.config/claude-ping/config.yaml, then re-run this script"
+echo "  Uninstall: for p in ~/Library/LaunchAgents/com.claudeping.*.plist; do launchctl bootout gui/\$(id -u)/\$(basename \$p .plist) && rm \$p; done"
