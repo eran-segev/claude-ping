@@ -11,11 +11,10 @@ PLIST_DIR="$HOME/Library/LaunchAgents"
 
 mkdir -p "$CONFIG_DIR/logs" "$PLIST_DIR"
 
-# Copy ping.sh and config.yaml (from repo into user config dir)
+# Copy ping.sh and config.yaml from repo, always overwriting installed copies
 cp "$SCRIPT_DIR/ping.sh" "$CONFIG_DIR/ping.sh"
 chmod +x "$CONFIG_DIR/ping.sh"
-
-[ ! -f "$CONFIG_DIR/config.yaml" ] && cp "$SCRIPT_DIR/config.yaml" "$CONFIG_DIR/config.yaml"
+cp "$SCRIPT_DIR/config.yaml" "$CONFIG_DIR/config.yaml"
 
 # Read schedule times from config.yaml (no pyyaml dependency — grep-based, BSD sed safe)
 # Strip comments before extracting times to avoid matching times mentioned in comment text
@@ -78,22 +77,27 @@ EOF
   echo "Loaded: $LABEL (fires at $(printf '%02d:%02d' "$HOUR" "$MIN") local time)"
 done
 
+# Schedule Mac wake via pmset (requires sudo)
+echo ""
+#echo "Scheduling Mac wake at ${FIRST_TIME} every working day (Sun–Thu)..."
+#if sudo pmset repeat wake UMTWR "${FIRST_TIME}:00"; then
+#  echo "✓ Mac wake scheduled at ${FIRST_TIME} (Sun–Thu)"
+echo "Scheduling Mac wake at ${FIRST_TIME} every weekday..."
+if sudo pmset repeat wake UMTWRFS "${FIRST_TIME}:00"; then
+  echo "✓ Mac wake scheduled at ${FIRST_TIME}"
+else
+  echo "⚠ pmset failed — you may need to run manually:"
+  echo "  sudo pmset repeat wake UMTWR ${FIRST_TIME}:00"
+fi
+
 echo ""
 echo "✓ Claude Ping installed."
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "REQUIRED: Schedule Mac wake (run once)"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  sudo pmset repeat wake UMTWR ${FIRST_TIME}:00"
-echo ""
-echo "  This wakes your Mac at your first trigger time (Sun–Thu)."
-echo "  Verify: pmset -g sched"
-echo "  Remove: sudo pmset repeat cancel"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "USAGE"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Test now:  bash ~/.config/claude-ping/ping.sh"
 echo "  Logs:      tail -f ~/.config/claude-ping/logs/\$(date +%Y-%m-%d).log"
-echo "  Update:    edit ~/.config/claude-ping/config.yaml, then re-run this script"
+echo "  Update:    edit config.yaml in the repo, then re-run this script"
+echo "  Wake sched: pmset -g sched"
 echo "  Uninstall: for p in ~/Library/LaunchAgents/com.claudeping.*.plist; do launchctl bootout gui/\$(id -u)/\$(basename \$p .plist) && rm \$p; done"

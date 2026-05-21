@@ -19,16 +19,16 @@ cd claude-ping
 bash setup.sh
 ```
 
-Then run the `pmset` command printed at the end of setup to schedule your Mac's wake.
+setup.sh configures launchd and schedules the Mac wake automatically (requires `sudo` for the `pmset` step).
 
 ## Configure
 
-Edit `~/.config/claude-ping/config.yaml`:
+Edit `config.yaml` in the repo:
 
 ```yaml
 schedule:
-  - "07:00"   # First trigger — also set as your pmset wake time
-  - "12:00"   # Second trigger (Mac is awake by now, no wake needed)
+  - "06:00"   # First trigger — also used as your Mac wake time
+  - "11:02"   # Second trigger (Mac is awake by now, no wake needed)
 
 greeting: "Starting a new work session."
 
@@ -37,19 +37,21 @@ sleep_after_trigger: true
 # false = leave Mac awake
 ```
 
-After editing, re-run `bash setup.sh` to apply the new schedule.
+After editing, re-run `bash setup.sh` to apply. setup.sh always copies this file into place and updates both launchd and the Mac wake schedule.
 
 ## Schedule Mac wake
 
-launchd fires the trigger jobs on time — but only if the Mac is awake. For the first (early-morning) trigger, schedule a recurring wake:
+setup.sh handles this automatically — it runs `sudo pmset repeat wake UMTWRFS <first-trigger-time>` at the end of installation. You'll be prompted for your password once.
+
+To verify or change the wake schedule manually:
 
 ```bash
-# Adjust days and time to match your first schedule entry
-# Days: M=Mon T=Tue W=Wed R=Thu F=Fri S=Sat U=Sun
-sudo pmset repeat wake UMTWR 07:00:00
-
-# Verify
+# Check current schedule
 pmset -g sched
+
+# Change wake time (adjust days/time as needed)
+# Days: M=Mon T=Tue W=Wed R=Thu F=Fri S=Sat U=Sun
+sudo pmset repeat wake UMTWRFS 06:00:00
 
 # Remove
 sudo pmset repeat cancel
@@ -87,7 +89,7 @@ Output prints directly to the terminal and to the log file.
 
 ## Update schedule
 
-Edit `~/.config/claude-ping/config.yaml`, then re-run:
+Edit `config.yaml` in the repo, then re-run:
 
 ```bash
 bash setup.sh

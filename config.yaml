@@ -1,3 +1,4 @@
+# Edit this file in the repo, then re-run setup.sh to apply changes.
 # Times in local wall-clock time — launchd uses your system timezone automatically
 schedule:
   - "06:00"   # 6:00 AM — session window opens, resets at 12:00 PM
